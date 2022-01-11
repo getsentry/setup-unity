@@ -174,7 +174,7 @@ async function executeHub(unityHubPath, args) {
     if (process.platform === 'linux') {
         return await execute(`xvfb-run --auto-servernum "${unityHubPath}" --headless ${args}`);
     } else if (process.platform === 'darwin') {
-        return await execute(`"${unityHubPath}" -- --headless ${args}`);
+        return await execute(`"${unityHubPath}" -- --headless ${args}`, true);
     } else if (process.platform === 'win32') {
         // unityhub always return exit code 1
         return await execute(`"${unityHubPath}" -- --headless ${args}`, true);
