@@ -89,7 +89,16 @@ async function installUnityEditor(unityHubPath, installPath, unityVersion, unity
             }
             await executeHub(unityHubPath, `install-path --set "${installPath}"`);
         }
-        await executeHub(unityHubPath, `install --version ${unityVersion} --changeset ${unityVersionChangeset}`);
+
+        let arguments = `install --version ${unityVersion} --changeset ${unityVersionChangeset}`
+        if (process.platform === 'darwin') {
+            if (parseInt(unityVersion) > 2020) {
+                arguments += ` --architecture arm64`
+            }
+        }
+        
+        await executeHub(unityHubPath, arguments);
+    
         unityPath = await findUnity(unityHubPath, unityVersion);
         if (!unityPath) {
             throw new Error('unity editor installation failed');
