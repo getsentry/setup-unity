@@ -197,7 +197,8 @@ async function execute(command, options) {
     await exec.exec(prefix + command, [], {
         ignoreReturnCode: options?.ignoreReturnCode,
         listeners: {
-            stdout: buffer => stdout += buffer.toString()
+            stdout: buffer => stdout += buffer.toString(),
+            stderr: buffer => stderr += buffer.toString()
         }
     });
     console.log(); // new line
