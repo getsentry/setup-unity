@@ -47,7 +47,7 @@ async function installUnityHub(selfHosted) {
             await execute(`touch "${process.env.HOME}/.config/Unity Hub/eulaAccepted"`);
             try {
                 await execute('apt-get update', { sudo: !selfHosted });
-                await execute('apt-get install -y libgconf-2-4 libglu1 libasound2 libgtk2.0-0 libgtk-3-0 libnss3 zenity xvfb', { sudo: !selfHosted });
+                await execute('apt-get install -y libgconf-2-4 libglu1 libasound2 libgtk2.0-0 libgtk-3-0 libnss3 zenity xvfb libfuse2 libssl1.1', { sudo: !selfHosted });
             } catch {
                 // skip 'command not found' error
             }
@@ -89,7 +89,19 @@ async function installUnityEditor(unityHubPath, installPath, unityVersion, unity
             }
             await executeHub(unityHubPath, `install-path --set "${installPath}"`);
         }
-        await executeHub(unityHubPath, `install --version ${unityVersion} --changeset ${unityVersionChangeset}`);
+
+        let arguments = `install --version ${unityVersion} --changeset ${unityVersionChangeset}`
+        if (process.platform === 'darwin') {
+            if (parseInt(unityVersion) > 2020) {
+                arguments += ` --architecture arm64`
+            }
+            else {
+                arguments += ` --architecture x86_64`
+            }
+        }
+        
+        await executeHub(unityHubPath, arguments);
+    
         unityPath = await findUnity(unityHubPath, unityVersion);
         if (!unityPath) {
             throw new Error('unity editor installation failed');
@@ -173,9 +185,9 @@ async function findVersionChangeset(unityVersion) {
 
 async function executeHub(unityHubPath, args) {
     if (process.platform === 'linux') {
-        return await execute(`xvfb-run --auto-servernum "${unityHubPath}" --headless ${args}`, { ignoreReturnCode: true });
+        return await execute(`xvfb-run --auto-servernum -e >(cat >&1) "${unityHubPath}" --disable-gpu-sandbox --headless ${args}`, { ignoreReturnCode: true });
     } else if (process.platform === 'darwin') {
-        return await execute(`"${unityHubPath}" -- --headless --architecture arm64 ${args}`, { ignoreReturnCode: true });
+        return await execute(`"${unityHubPath}" -- --headless ${args}`, { ignoreReturnCode: true });
     } else if (process.platform === 'win32') {
         // unityhub always return exit code 1
         return await execute(`"${unityHubPath}" -- --headless ${args}`, { ignoreReturnCode: true });
@@ -184,11 +196,13 @@ async function executeHub(unityHubPath, args) {
 
 async function execute(command, options) {
     let stdout = '';
+    let stderr = '';
     const prefix = options?.sudo == true ? 'sudo ' : '';
     await exec.exec(prefix + command, [], {
         ignoreReturnCode: options?.ignoreReturnCode,
         listeners: {
-            stdout: buffer => stdout += buffer.toString()
+            stdout: buffer => stdout += buffer.toString(),
+            stderr: buffer => stderr += buffer.toString()
         }
     });
     console.log(); // new line
