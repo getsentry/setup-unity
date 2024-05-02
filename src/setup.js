@@ -185,7 +185,7 @@ async function findVersionChangeset(unityVersion) {
 
 async function executeHub(unityHubPath, args) {
     if (process.platform === 'linux') {
-        return await execute(`xvfb-run --auto-servernum -e /dev/stdout "${unityHubPath}" --disable-gpu-sandbox --headless ${args}`, { ignoreReturnCode: true });
+        return await execute(`xvfb-run --auto-servernum -e >(cat >&1) "${unityHubPath}" --disable-gpu-sandbox --headless ${args}`, { ignoreReturnCode: true });
     } else if (process.platform === 'darwin') {
         return await execute(`"${unityHubPath}" -- --headless ${args}`, { ignoreReturnCode: true });
     } else if (process.platform === 'win32') {
