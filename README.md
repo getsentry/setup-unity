@@ -40,6 +40,10 @@ Path to Unity project. Used to find Unity version. Default `${{ github.workspace
 
 Path where the Unity editor will be installed.
 
+### `self-hosted`
+
+If true, avoid to invoke commands with sudo. Default `false`.
+
 ## Outputs
 
 ### `unity-version`
@@ -48,7 +52,7 @@ Unity version.
 
 ### `unity-path`
 
-Unity executable path. Also setted env `UNITY_PATH`.
+Unity executable path. Also set as an environment variable `UNITY_PATH`.
 
 ## Known issues
 
