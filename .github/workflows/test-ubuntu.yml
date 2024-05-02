@@ -35,6 +35,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Install libfuse2
         run: sudo apt install -y libfuse2
+      - name: Install libssl1.1
+        run: sudo apt-get install libssl1.1
       - name: Check free space
         run: df -h
       - name: Setup unity
