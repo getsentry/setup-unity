@@ -95,6 +95,9 @@ async function installUnityEditor(unityHubPath, installPath, unityVersion, unity
             if (parseInt(unityVersion) > 2020) {
                 arguments += ` --architecture arm64`
             }
+            else {
+                arguments += ` --architecture x86_64`
+            }
         }
         
         await executeHub(unityHubPath, arguments);
