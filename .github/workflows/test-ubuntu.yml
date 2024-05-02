@@ -32,7 +32,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Install libfuse2
-        run: apt install -y libfuse2
+        run: sudo apt install -y libfuse2
       - name: Check free space
         run: df -h
       - name: Setup unity
