@@ -93,7 +93,8 @@ async function installUnityEditor(unityHubPath, installPath, unityVersion, unity
         let arguments = `install --version ${unityVersion} --changeset ${unityVersionChangeset}`
         if (process.platform === 'darwin') {
             if (parseInt(unityVersion) > 2020) {
-                arguments += ` --architecture arm64`
+                // This is where we would set it to `arm64` but the progressive CPU lightmapper is not supported. And there is no GPU
+                arguments += ` --architecture x86_64`
             }
             else {
                 arguments += ` --architecture x86_64`
