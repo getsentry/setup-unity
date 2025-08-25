@@ -162,19 +162,42 @@ async function findProjectVersion(projectPath) {
 async function findVersionChangeset(unityVersion) {
     let changeset = '';
     try {
+        console.log(`[DEBUG] Finding changeset for Unity version: ${unityVersion}`);
+        
         let versionPageUrl;
+        
         if (unityVersion.includes('a')) {
             versionPageUrl = 'https://unity.com/releases/editor/alpha/' + unityVersion;
         } else if (unityVersion.includes('b')) {
             versionPageUrl = 'https://unity.com/releases/editor/beta/' + unityVersion;
         } else if (unityVersion.includes('f')) {
-            versionPageUrl = 'https://unity.com/releases/editor/whats-new/' + unityVersion.match(/[.0-9]+/)[0];
+            const versionMatch = unityVersion.match(/[.0-9]+/);
+            if (versionMatch && versionMatch[0]) {
+                versionPageUrl = 'https://unity.com/releases/editor/whats-new/' + versionMatch[0];
+            } else {
+                throw new Error(`Unable to extract version number from Unity version: ${unityVersion}`);
+            }
+        } else {
+            throw new Error(`Unknown Unity version format: ${unityVersion}`);
         }
-        const pagePath = await tc.downloadTool(versionPageUrl); // support retry
+        
+        console.log(`[DEBUG] Attempting to download from URL: ${versionPageUrl}`);
+        const pagePath = await tc.downloadTool(versionPageUrl);
+
+        console.log(`[DEBUG] Successfully downloaded page to: ${pagePath}`);
         const pageText = fs.readFileSync(pagePath, 'utf8');
+        
+        console.log(`[DEBUG] Page text length: ${pageText.length} characters`);
         const match = pageText.match(new RegExp(`unityhub://${unityVersion}/([a-z0-9]+)`)) || pageText.match(/Changeset:<\/span>[ \n]*([a-z0-9]{12})/);
-        changeset = match[1];
+        
+        if (match && match[1]) {
+            changeset = match[1];
+            console.log(`[DEBUG] Found changeset: ${changeset}`);
+        } else {
+            console.log(`[DEBUG] No changeset match found in page content`);
+        }
     } catch (error) {
+        console.log(`[DEBUG] Error in findVersionChangeset: ${error.message}`);
         core.error(error);
     }
     if (!changeset) {
