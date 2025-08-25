@@ -171,12 +171,7 @@ async function findVersionChangeset(unityVersion) {
         } else if (unityVersion.includes('b')) {
             versionPageUrl = 'https://unity.com/releases/editor/beta/' + unityVersion;
         } else if (unityVersion.includes('f')) {
-            const versionMatch = unityVersion.match(/[.0-9]+/);
-            if (versionMatch && versionMatch[0]) {
-                versionPageUrl = 'https://unity.com/releases/editor/whats-new/' + versionMatch[0];
-            } else {
-                throw new Error(`Unable to extract version number from Unity version: ${unityVersion}`);
-            }
+            versionPageUrl = 'https://unity.com/releases/editor/whats-new/' + unityVersion;
         } else {
             throw new Error(`Unknown Unity version format: ${unityVersion}`);
         }
