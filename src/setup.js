@@ -164,11 +164,11 @@ async function findVersionChangeset(unityVersion) {
     try {
         let versionPageUrl;
         if (unityVersion.includes('a')) {
-            versionPageUrl = 'https://unity3d.com/unity/alpha/' + unityVersion;
+            versionPageUrl = 'https://unity.com/releases/editor/alpha/' + unityVersion;
         } else if (unityVersion.includes('b')) {
-            versionPageUrl = 'https://unity3d.com/unity/beta/' + unityVersion;
+            versionPageUrl = 'https://unity.com/releases/editor/beta/' + unityVersion;
         } else if (unityVersion.includes('f')) {
-            versionPageUrl = 'https://unity3d.com/unity/whats-new/' + unityVersion.match(/[.0-9]+/)[0];
+            versionPageUrl = 'https://unity.com/releases/editor/whats-new/' + unityVersion.match(/[.0-9]+/)[0];
         }
         const pagePath = await tc.downloadTool(versionPageUrl); // support retry
         const pageText = fs.readFileSync(pagePath, 'utf8');
