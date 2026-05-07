@@ -56,7 +56,7 @@ outputs:
   unity-path:
     description: Unity executable path. Also setted env UNITY_PATH
 runs:
-  using: node16
+  using: node24
   main: src/setup.js
 branding:
   icon: download
