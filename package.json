@@ -1,15 +1,24 @@
 {
   "name": "setup-unity",
-  "description": "setup unity action",
+  "version": "2.0.0",
+  "description": "GitHub Action that installs Unity Editor on Linux, macOS, and Windows.",
+  "private": true,
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kuler90/setup-unity.git"
+    "url": "git+https://github.com/getsentry/setup-unity.git"
   },
-  "license": "MIT",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/index.js -o dist --license licenses.txt",
+    "test": "node --test test/"
+  },
   "dependencies": {
     "@actions/core": "^1.11.1",
     "@actions/exec": "^1.1.1",
     "@actions/tool-cache": "^2.0.2"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.1"
+  }
 }
