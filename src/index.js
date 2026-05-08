@@ -91,7 +91,7 @@ async function installHubWindows() {
     if (fs.existsSync(hubPath)) return hubPath;
 
     const installer = await tc.downloadTool('https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe');
-    await exec.exec(installer, ['/s']);
+    await exec.exec(`"${installer}"`, ['/s']);
     fs.unlinkSync(installer);
 
     return hubPath;
@@ -181,7 +181,8 @@ function playbackEnginesRoot(unityPath) {
 }
 
 async function smokeLaunchEditor(unityPath) {
-    const code = await exec.exec(unityPath, [
+    // Quote the path: exec.exec parses its first arg as a shell command line and splits on spaces.
+    const code = await exec.exec(`"${unityPath}"`, [
         '-batchmode', '-nographics', '-quit',
         '-logFile', '-',
     ], { ignoreReturnCode: true, silent: false });
@@ -196,8 +197,9 @@ async function runHub(hubPath, args) {
         const cmd = `xvfb-run --auto-servernum -e >(cat >&1) "${hubPath}" --disable-gpu-sandbox --headless ${args.map(quote).join(' ')}`;
         return await captureStdoutShell(cmd);
     }
-    // macOS + Windows: hubPath -- --headless <args>; Hub on Windows always exits 1 on success
-    return await captureStdout(hubPath, ['--', '--headless', ...args], { ignoreReturnCode: true });
+    // macOS + Windows: hubPath -- --headless <args>; Hub on Windows always exits 1 on success.
+    // Quote the path: exec.exec parses its first arg as a shell command line and splits on spaces.
+    return await captureStdout(`"${hubPath}"`, ['--', '--headless', ...args], { ignoreReturnCode: true });
 }
 
 async function readUbuntuVersion() {
