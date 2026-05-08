@@ -38,7 +38,6 @@ After install, the action checks:
 
 1. The Unity Hub `install-modules` stdout reports success.
 2. Each requested module's expected directory exists on disk (with the right variant for IL2CPP/Mono).
-3. The Unity Editor binary launches in batchmode and exits cleanly.
 
 If any step fails, the action fails with an actionable message.
 

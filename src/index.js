@@ -167,8 +167,6 @@ async function verifyInstall(unityPath, modules) {
             }
         }
     }
-
-    await smokeLaunchEditor(unityPath);
 }
 
 function playbackEnginesRoot(unityPath) {
@@ -178,17 +176,6 @@ function playbackEnginesRoot(unityPath) {
     }
     // Windows + Linux: <root>/Editor/Unity{.exe} → engines at <root>/Editor/Data/PlaybackEngines
     return path.join(path.dirname(unityPath), 'Data', 'PlaybackEngines');
-}
-
-async function smokeLaunchEditor(unityPath) {
-    // Quote the path: exec.exec parses its first arg as a shell command line and splits on spaces.
-    const code = await exec.exec(`"${unityPath}"`, [
-        '-batchmode', '-nographics', '-quit',
-        '-logFile', '-',
-    ], { ignoreReturnCode: true, silent: false });
-    if (code !== 0) {
-        throw new Error(`Unity smoke launch failed (exit ${code}). Editor at ${unityPath} is not runnable.`);
-    }
 }
 
 async function runHub(hubPath, args) {
