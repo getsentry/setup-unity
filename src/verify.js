@@ -19,4 +19,13 @@ function libsslPackageForUbuntu(versionString) {
     return major >= 22 ? 'libssl3' : 'libssl1.1';
 }
 
-module.exports = { decideMacArchFlag, libsslPackageForUbuntu };
+function isModuleInstallSuccessful(stdout) {
+    if (!stdout) return false;
+    return stdout.includes('successfully') || stdout.includes("it's already installed");
+}
+
+module.exports = {
+    decideMacArchFlag,
+    libsslPackageForUbuntu,
+    isModuleInstallSuccessful,
+};

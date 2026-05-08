@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { decideMacArchFlag, libsslPackageForUbuntu } = require('../src/verify');
+const { decideMacArchFlag, libsslPackageForUbuntu, isModuleInstallSuccessful } = require('../src/verify');
 
 test('decideMacArchFlag: 2020.x is x86_64', () => {
     assert.equal(decideMacArchFlag('2020.3.48f1'), 'x86_64');
@@ -40,4 +40,29 @@ test('libsslPackageForUbuntu: 18.04 → libssl1.1', () => {
 
 test('libsslPackageForUbuntu: throws on unparseable input', () => {
     assert.throws(() => libsslPackageForUbuntu('garbage'), /Cannot parse Ubuntu version/);
+});
+
+test('isModuleInstallSuccessful: success message', () => {
+    assert.equal(
+        isModuleInstallSuccessful('Module windows-il2cpp installed successfully.'),
+        true
+    );
+});
+
+test("isModuleInstallSuccessful: already installed", () => {
+    assert.equal(
+        isModuleInstallSuccessful("Module windows-il2cpp it's already installed."),
+        true
+    );
+});
+
+test('isModuleInstallSuccessful: empty stdout', () => {
+    assert.equal(isModuleInstallSuccessful(''), false);
+});
+
+test('isModuleInstallSuccessful: error stdout', () => {
+    assert.equal(
+        isModuleInstallSuccessful('Module install failed: network error'),
+        false
+    );
 });
