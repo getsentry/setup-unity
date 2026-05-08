@@ -1,6 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { decideMacArchFlag, libsslPackageForUbuntu, isModuleInstallSuccessful } = require('../src/verify');
+const path = require('node:path');
+const {
+    decideMacArchFlag,
+    libsslPackageForUbuntu,
+    isModuleInstallSuccessful,
+    moduleVerificationPaths,
+} = require('../src/verify');
 
 test('decideMacArchFlag: 2020.x is x86_64', () => {
     assert.equal(decideMacArchFlag('2020.3.48f1'), 'x86_64');
@@ -65,4 +71,65 @@ test('isModuleInstallSuccessful: error stdout', () => {
         isModuleInstallSuccessful('Module install failed: network error'),
         false
     );
+});
+
+test('moduleVerificationPaths: windows-il2cpp', () => {
+    const result = moduleVerificationPaths('/pe', 'windows-il2cpp');
+    assert.deepEqual(result, {
+        baseDir: path.join('/pe', 'WindowsStandaloneSupport', 'Variations'),
+        mustExist: 'directory',
+        variantContains: 'il2cpp',
+    });
+});
+
+test('moduleVerificationPaths: mac-il2cpp', () => {
+    const result = moduleVerificationPaths('/pe', 'mac-il2cpp');
+    assert.deepEqual(result, {
+        baseDir: path.join('/pe', 'MacStandaloneSupport', 'Variations'),
+        mustExist: 'directory',
+        variantContains: 'il2cpp',
+    });
+});
+
+test('moduleVerificationPaths: linux-il2cpp', () => {
+    const result = moduleVerificationPaths('/pe', 'linux-il2cpp');
+    assert.deepEqual(result, {
+        baseDir: path.join('/pe', 'LinuxStandaloneSupport', 'Variations'),
+        mustExist: 'directory',
+        variantContains: 'il2cpp',
+    });
+});
+
+test('moduleVerificationPaths: android (no variant)', () => {
+    const result = moduleVerificationPaths('/pe', 'android');
+    assert.deepEqual(result, {
+        baseDir: path.join('/pe', 'AndroidPlayer'),
+        mustExist: 'directory',
+    });
+});
+
+test('moduleVerificationPaths: ios', () => {
+    const result = moduleVerificationPaths('/pe', 'ios');
+    assert.deepEqual(result, {
+        baseDir: path.join('/pe', 'iOSSupport'),
+        mustExist: 'directory',
+    });
+});
+
+test('moduleVerificationPaths: webgl', () => {
+    const result = moduleVerificationPaths('/pe', 'webgl');
+    assert.deepEqual(result, {
+        baseDir: path.join('/pe', 'WebGLSupport'),
+        mustExist: 'directory',
+    });
+});
+
+test('moduleVerificationPaths: unknown module returns null', () => {
+    assert.equal(moduleVerificationPaths('/pe', 'made-up-module'), null);
+});
+
+test('moduleVerificationPaths: case-insensitive', () => {
+    const lower = moduleVerificationPaths('/pe', 'android');
+    const upper = moduleVerificationPaths('/pe', 'Android');
+    assert.deepEqual(upper, lower);
 });
