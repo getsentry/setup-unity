@@ -1,0 +1,35 @@
+name: smoke
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+jobs:
+  install:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            unity-modules: linux-il2cpp
+          - os: macos-latest
+            unity-modules: mac-il2cpp
+          - os: windows-latest
+            unity-modules: windows-il2cpp
+    steps:
+      - uses: actions/checkout@v4
+      - id: setup-unity
+        uses: ./
+        with:
+          unity-version: 2022.3.21f1
+          unity-version-changeset: f9bb1bcc7635
+          unity-modules: ${{ matrix.unity-modules }}
+      - name: Assert outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${{ steps.setup-unity.outputs.unity-path }}"
+          test -e "${{ steps.setup-unity.outputs.unity-path }}"
+          test "${{ steps.setup-unity.outputs.unity-version }}" = "2022.3.21f1"
+          test -n "$UNITY_PATH"
