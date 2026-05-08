@@ -10,4 +10,13 @@ function decideMacArchFlag(unityVersion) {
     return 'x86_64';
 }
 
-module.exports = { decideMacArchFlag };
+function libsslPackageForUbuntu(versionString) {
+    const [majorStr] = versionString.split('.');
+    const major = parseInt(majorStr, 10);
+    if (Number.isNaN(major)) {
+        throw new Error(`Cannot parse Ubuntu version: ${versionString}`);
+    }
+    return major >= 22 ? 'libssl3' : 'libssl1.1';
+}
+
+module.exports = { decideMacArchFlag, libsslPackageForUbuntu };
