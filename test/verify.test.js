@@ -1,0 +1,23 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { decideMacArchFlag } = require('../src/verify');
+
+test('decideMacArchFlag: 2020.x is x86_64', () => {
+    assert.equal(decideMacArchFlag('2020.3.48f1'), 'x86_64');
+});
+
+test('decideMacArchFlag: 2021.1 is x86_64 (before arm64 shipped)', () => {
+    assert.equal(decideMacArchFlag('2021.1.28f1'), 'x86_64');
+});
+
+test('decideMacArchFlag: 2021.2 is arm64', () => {
+    assert.equal(decideMacArchFlag('2021.2.0f1'), 'arm64');
+});
+
+test('decideMacArchFlag: 2022.3 is arm64', () => {
+    assert.equal(decideMacArchFlag('2022.3.21f1'), 'arm64');
+});
+
+test('decideMacArchFlag: 2019.x is x86_64', () => {
+    assert.equal(decideMacArchFlag('2019.4.40f1'), 'x86_64');
+});
