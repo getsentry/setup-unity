@@ -28219,8 +28219,8 @@ function moduleVerificationPaths(playbackEnginesRoot, moduleId) {
     if (!marker) return null;
     const baseDir = path.join(playbackEnginesRoot, ...marker.subdir);
     return marker.variantContains
-        ? { baseDir, mustExist: 'directory', variantContains: marker.variantContains }
-        : { baseDir, mustExist: 'directory' };
+        ? { baseDir, variantContains: marker.variantContains }
+        : { baseDir };
 }
 
 function decideMacArchFlag(unityVersion) {
@@ -28236,11 +28236,7 @@ function decideMacArchFlag(unityVersion) {
 }
 
 function libsslPackageForUbuntu(versionString) {
-    const [majorStr] = versionString.split('.');
-    const major = parseInt(majorStr, 10);
-    if (Number.isNaN(major)) {
-        throw new Error(`Cannot parse Ubuntu version: ${versionString}`);
-    }
+    const major = parseInt(versionString.split('.')[0], 10);
     return major >= 22 ? 'libssl3' : 'libssl1.1';
 }
 
@@ -30239,7 +30235,7 @@ async function installHubLinux() {
     const installer = await tc.downloadTool('https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage');
     fs.mkdirSync(`${home}/Unity Hub`, { recursive: true });
     fs.mkdirSync(`${home}/.config/Unity Hub`, { recursive: true });
-    // Use `mv` rather than fs.renameSync — installer and $HOME may be on different filesystems (EXDEV).
+    // `mv` handles cross-filesystem moves; fs.renameSync would fail with EXDEV.
     await exec.exec('mv', [installer, hubPath]);
     fs.chmodSync(hubPath, 0o755);
     fs.writeFileSync(`${home}/.config/Unity Hub/eulaAccepted`, '');
@@ -30264,10 +30260,7 @@ async function installHubMac() {
 
     const installer = await tc.downloadTool('https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg');
     await execSudo('hdiutil', ['mount', installer]);
-    const volumes = await captureStdout('ls', ['/Volumes']);
-    const match = volumes.match(/Unity Hub.*/);
-    if (!match) throw new Error('Unity Hub volume not found after mount');
-    const volume = match[0];
+    const volume = (await captureStdout('ls', ['/Volumes'])).match(/Unity Hub.*/)[0];
     await exec.exec('ditto', [`/Volumes/${volume}/Unity Hub.app`, '/Applications/Unity Hub.app']);
     await execSudo('hdiutil', ['detach', `/Volumes/${volume}`]);
     fs.unlinkSync(installer);
@@ -30360,21 +30353,17 @@ async function verifyInstall(unityPath, modules) {
 
 function playbackEnginesRoot(unityPath) {
     if (process.platform === 'darwin') {
-        // unityPath: <root>/Unity.app/Contents/MacOS/Unity → engines at <root>/Unity.app/Contents/PlaybackEngines
         return path.join(path.dirname(path.dirname(unityPath)), 'PlaybackEngines');
     }
-    // Windows + Linux: <root>/Editor/Unity{.exe} → engines at <root>/Editor/Data/PlaybackEngines
     return path.join(path.dirname(unityPath), 'Data', 'PlaybackEngines');
 }
 
 async function runHub(hubPath, args) {
     if (process.platform === 'linux') {
-        // xvfb-run wrapping; quote hub path; redirect stderr → stdout via process substitution
         const cmd = `xvfb-run --auto-servernum -e >(cat >&1) "${hubPath}" --disable-gpu-sandbox --headless ${args.map(quote).join(' ')}`;
         return await captureStdoutShell(cmd);
     }
-    // macOS + Windows: hubPath -- --headless <args>; Hub on Windows always exits 1 on success.
-    // Quote the path: exec.exec parses its first arg as a shell command line and splits on spaces.
+    // Hub on Windows exits 1 on success. Quote hubPath so exec.exec doesn't split on spaces.
     return await captureStdout(`"${hubPath}"`, ['--', '--headless', ...args], { ignoreReturnCode: true });
 }
 
@@ -30385,7 +30374,7 @@ async function readUbuntuVersion() {
 async function captureStdout(command, args, options = {}) {
     let stdout = '';
     await exec.exec(command, args, {
-        ignoreReturnCode: options.ignoreReturnCode === true,
+        ignoreReturnCode: options.ignoreReturnCode,
         listeners: { stdout: b => stdout += b.toString() },
     });
     return stdout;

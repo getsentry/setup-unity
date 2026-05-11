@@ -18,8 +18,8 @@ function moduleVerificationPaths(playbackEnginesRoot, moduleId) {
     if (!marker) return null;
     const baseDir = path.join(playbackEnginesRoot, ...marker.subdir);
     return marker.variantContains
-        ? { baseDir, mustExist: 'directory', variantContains: marker.variantContains }
-        : { baseDir, mustExist: 'directory' };
+        ? { baseDir, variantContains: marker.variantContains }
+        : { baseDir };
 }
 
 function decideMacArchFlag(unityVersion) {
@@ -35,11 +35,7 @@ function decideMacArchFlag(unityVersion) {
 }
 
 function libsslPackageForUbuntu(versionString) {
-    const [majorStr] = versionString.split('.');
-    const major = parseInt(majorStr, 10);
-    if (Number.isNaN(major)) {
-        throw new Error(`Cannot parse Ubuntu version: ${versionString}`);
-    }
+    const major = parseInt(versionString.split('.')[0], 10);
     return major >= 22 ? 'libssl3' : 'libssl1.1';
 }
 

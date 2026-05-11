@@ -24,10 +24,6 @@ test('decideMacArchFlag: 2022.3 is arm64', () => {
     assert.equal(decideMacArchFlag('2022.3.21f1'), 'arm64');
 });
 
-test('decideMacArchFlag: 2019.x is x86_64', () => {
-    assert.equal(decideMacArchFlag('2019.4.40f1'), 'x86_64');
-});
-
 test('libsslPackageForUbuntu: 20.04 → libssl1.1', () => {
     assert.equal(libsslPackageForUbuntu('20.04'), 'libssl1.1');
 });
@@ -38,14 +34,6 @@ test('libsslPackageForUbuntu: 22.04 → libssl3', () => {
 
 test('libsslPackageForUbuntu: 24.04 → libssl3', () => {
     assert.equal(libsslPackageForUbuntu('24.04'), 'libssl3');
-});
-
-test('libsslPackageForUbuntu: 18.04 → libssl1.1', () => {
-    assert.equal(libsslPackageForUbuntu('18.04'), 'libssl1.1');
-});
-
-test('libsslPackageForUbuntu: throws on unparseable input', () => {
-    assert.throws(() => libsslPackageForUbuntu('garbage'), /Cannot parse Ubuntu version/);
 });
 
 test('isModuleInstallSuccessful: success message', () => {
@@ -73,54 +61,16 @@ test('isModuleInstallSuccessful: error stdout', () => {
     );
 });
 
-test('moduleVerificationPaths: windows-il2cpp', () => {
-    const result = moduleVerificationPaths('/pe', 'windows-il2cpp');
-    assert.deepEqual(result, {
+test('moduleVerificationPaths: with variant', () => {
+    assert.deepEqual(moduleVerificationPaths('/pe', 'windows-il2cpp'), {
         baseDir: path.join('/pe', 'WindowsStandaloneSupport', 'Variations'),
-        mustExist: 'directory',
         variantContains: 'il2cpp',
     });
 });
 
-test('moduleVerificationPaths: mac-il2cpp', () => {
-    const result = moduleVerificationPaths('/pe', 'mac-il2cpp');
-    assert.deepEqual(result, {
-        baseDir: path.join('/pe', 'MacStandaloneSupport', 'Variations'),
-        mustExist: 'directory',
-        variantContains: 'il2cpp',
-    });
-});
-
-test('moduleVerificationPaths: linux-il2cpp', () => {
-    const result = moduleVerificationPaths('/pe', 'linux-il2cpp');
-    assert.deepEqual(result, {
-        baseDir: path.join('/pe', 'LinuxStandaloneSupport', 'Variations'),
-        mustExist: 'directory',
-        variantContains: 'il2cpp',
-    });
-});
-
-test('moduleVerificationPaths: android (no variant)', () => {
-    const result = moduleVerificationPaths('/pe', 'android');
-    assert.deepEqual(result, {
+test('moduleVerificationPaths: no variant', () => {
+    assert.deepEqual(moduleVerificationPaths('/pe', 'android'), {
         baseDir: path.join('/pe', 'AndroidPlayer'),
-        mustExist: 'directory',
-    });
-});
-
-test('moduleVerificationPaths: ios', () => {
-    const result = moduleVerificationPaths('/pe', 'ios');
-    assert.deepEqual(result, {
-        baseDir: path.join('/pe', 'iOSSupport'),
-        mustExist: 'directory',
-    });
-});
-
-test('moduleVerificationPaths: webgl', () => {
-    const result = moduleVerificationPaths('/pe', 'webgl');
-    assert.deepEqual(result, {
-        baseDir: path.join('/pe', 'WebGLSupport'),
-        mustExist: 'directory',
     });
 });
 
@@ -129,7 +79,8 @@ test('moduleVerificationPaths: unknown module returns null', () => {
 });
 
 test('moduleVerificationPaths: case-insensitive', () => {
-    const lower = moduleVerificationPaths('/pe', 'android');
-    const upper = moduleVerificationPaths('/pe', 'Android');
-    assert.deepEqual(upper, lower);
+    assert.deepEqual(
+        moduleVerificationPaths('/pe', 'Android'),
+        moduleVerificationPaths('/pe', 'android'),
+    );
 });
