@@ -30195,6 +30195,8 @@ const {
     moduleVerificationPaths,
 } = __nccwpck_require__(1608);
 
+const HUB_VERSION = '3.18.0';
+
 async function run() {
     try {
         const unityVersion = core.getInput('unity-version', { required: true });
@@ -30228,28 +30230,29 @@ async function installUnityHub() {
 }
 
 async function installHubLinux() {
-    const home = process.env.HOME;
-    const hubPath = `${home}/Unity Hub/UnityHub.AppImage`;
+    const hubPath = '/usr/bin/unityhub';
     if (fs.existsSync(hubPath)) return hubPath;
 
-    const installer = await tc.downloadTool('https://public-cdn.cloud.unity3d.com/hub/prod/UnityHub.AppImage');
-    fs.mkdirSync(`${home}/Unity Hub`, { recursive: true });
+    const home = process.env.HOME;
+    const debUrl = `https://hub-dist.unity3d.com/artifactory/hub-debian-prod-local/pool/main/u/unity/unityhub_amd64/UnityHubSetup-${HUB_VERSION}-amd64.deb`;
+    // apt-get install needs a .deb extension to recognize the local file.
+    const debPath = path.join(process.env.RUNNER_TEMP || '/tmp', `unityhub-${HUB_VERSION}.deb`);
+    await tc.downloadTool(debUrl, debPath);
+
     fs.mkdirSync(`${home}/.config/Unity Hub`, { recursive: true });
-    // `mv` handles cross-filesystem moves; fs.renameSync would fail with EXDEV.
-    await exec.exec('mv', [installer, hubPath]);
-    fs.chmodSync(hubPath, 0o755);
     fs.writeFileSync(`${home}/.config/Unity Hub/eulaAccepted`, '');
 
     const ubuntuVersion = await readUbuntuVersion();
     const libsslPkg = libsslPackageForUbuntu(ubuntuVersion);
     await execSudo('apt-get', ['update']);
-    await execSudo('apt-get', [
-        'install', '-y',
-        'libgconf-2-4', 'libglu1', 'libasound2',
-        'libgtk2.0-0', 'libgtk-3-0', 'libnss3',
-        'zenity', 'xvfb', 'libfuse2',
+    // The Hub .deb declares its own deps. Remaining packages are Unity Editor runtime + xvfb for headless.
+    await execSudo('apt-get', ['install', '-y',
+        debPath,
         libsslPkg,
+        'libgconf-2-4', 'libglu1', 'libasound2', 'libgtk2.0-0',
+        'xvfb',
     ]);
+    fs.unlinkSync(debPath);
 
     return hubPath;
 }
@@ -30258,7 +30261,9 @@ async function installHubMac() {
     const hubPath = '/Applications/Unity Hub.app/Contents/MacOS/Unity Hub';
     if (fs.existsSync(hubPath)) return hubPath;
 
-    const installer = await tc.downloadTool('https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg');
+    const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
+    const url = `https://public-cdn.cloud.unity3d.com/hub/prod/${HUB_VERSION}/UnityHubSetup-${HUB_VERSION}-${arch}.dmg`;
+    const installer = await tc.downloadTool(url);
     await execSudo('hdiutil', ['mount', installer]);
     const volume = (await captureStdout('ls', ['/Volumes'])).match(/Unity Hub.*/)[0];
     await exec.exec('ditto', [`/Volumes/${volume}/Unity Hub.app`, '/Applications/Unity Hub.app']);
@@ -30272,7 +30277,9 @@ async function installHubWindows() {
     const hubPath = 'C:/Program Files/Unity Hub/Unity Hub.exe';
     if (fs.existsSync(hubPath)) return hubPath;
 
-    const installer = await tc.downloadTool('https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe');
+    const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
+    const url = `https://public-cdn.cloud.unity3d.com/hub/prod/${HUB_VERSION}/UnityHubSetup-${HUB_VERSION}-${arch}.exe`;
+    const installer = await tc.downloadTool(url);
     await exec.exec(`"${installer}"`, ['/s']);
     fs.unlinkSync(installer);
 
