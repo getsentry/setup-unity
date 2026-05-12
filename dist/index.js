@@ -30367,8 +30367,11 @@ function playbackEnginesRoot(unityPath) {
 
 async function runHub(hubPath, args) {
     if (process.platform === 'linux') {
-        const cmd = `xvfb-run --auto-servernum -e >(cat >&1) "${hubPath}" --disable-gpu-sandbox --headless ${args.map(quote).join(' ')}`;
-        return await captureStdoutShell(cmd);
+        // -e /dev/stdout merges xvfb-run's error log into stdout without needing a shell.
+        return await captureStdout('xvfb-run', [
+            '--auto-servernum', '-e', '/dev/stdout',
+            hubPath, '--disable-gpu-sandbox', '--headless', ...args,
+        ], { ignoreReturnCode: true });
     }
     // Hub on Windows exits 1 on success. Quote hubPath so exec.exec doesn't split on spaces.
     return await captureStdout(`"${hubPath}"`, ['--', '--headless', ...args], { ignoreReturnCode: true });
@@ -30387,21 +30390,8 @@ async function captureStdout(command, args, options = {}) {
     return stdout;
 }
 
-async function captureStdoutShell(commandLine) {
-    let stdout = '';
-    await exec.exec('bash', ['-c', commandLine], {
-        ignoreReturnCode: true,
-        listeners: { stdout: b => stdout += b.toString() },
-    });
-    return stdout;
-}
-
 async function execSudo(command, args) {
     await exec.exec('sudo', [command, ...args]);
-}
-
-function quote(s) {
-    return /[\s"'$`\\]/.test(s) ? `"${s.replace(/(["\\$`])/g, '\\$1')}"` : s;
 }
 
 function escapeRegex(s) {
