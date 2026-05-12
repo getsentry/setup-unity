@@ -1,85 +1,60 @@
 # setup-unity
 
-<p align="left">
-  <a href="https://github.com/kuler90/setup-unity/actions"><img alt="GitHub Actions status" src="https://github.com/kuler90/setup-unity/workflows/test%20ubuntu/badge.svg?branch=master"></a>
-  <a href="https://github.com/kuler90/setup-unity/actions"><img alt="GitHub Actions status" src="https://github.com/kuler90/setup-unity/workflows/test%20macos/badge.svg?branch=master"></a>
-  <a href="https://github.com/kuler90/setup-unity/actions"><img alt="GitHub Actions status" src="https://github.com/kuler90/setup-unity/workflows/test%20windows/badge.svg?branch=master"></a>
-</p>
+GitHub Action that installs a specific Unity Editor version (and optional modules) on Linux, macOS, and Windows runners.
 
-GitHub Action to download and install Unity. Based on Unity Hub.
+This action is maintained for the [Sentry Unity SDK](https://github.com/getsentry/sentry-unity)'s CI. It deliberately exposes a small, fixed contract — no auto-discovery, no web scraping. The caller passes the exact Unity version and changeset.
 
-Works on Ubuntu, macOS and Windows.
+## Usage
+
+```yaml
+- uses: actions/checkout@v4
+- uses: getsentry/setup-unity@v2
+  with:
+    unity-version: 2022.3.21f1
+    unity-version-changeset: f9bb1bcc7635
+    unity-modules: |
+      windows-il2cpp
+- run: echo "Unity is at $UNITY_PATH"
+```
 
 ## Inputs
 
-### `unity-version`
-
-Unity version to install. For example, `2019.4.9f1`. Project version will be used if not provided.
-
-### `unity-version-changeset`
-
-Unity version changeset. For example, `50fe8a171dd9`. Automatically parsed from Unity site if not provided.
-
-### `unity-modules`
-
-List of Unity modules (e.g. build support) to install. For example, `[ios, android, webgl]`.
-
-Available modules can be found in the test workflows ([test-ubuntu](https://github.com/kuler90/setup-unity/blob/master/.github/workflows/test-ubuntu.yml), [test-macos](https://github.com/kuler90/setup-unity/blob/master/.github/workflows/test-macos.yml), [test-windows](https://github.com/kuler90/setup-unity/blob/master/.github/workflows/test-windows.yml)). 
-
-Also list of available modules can be found by execute `<unity-hub> -- --headless help` but result may contains wrong names.
-
-### `unity-modules-child`
-
-Automatically installs all child modules of selected modules. For example, `android-open-jdk` and `android-sdk-ndk-tools` for android. Default `true`.
-
-### `project-path`
-
-Path to Unity project. Used to find Unity version. Default `${{ github.workspace }}`.
-
-### `install-path`
-
-Path where the Unity editor will be installed.
-
-### `self-hosted`
-
-If true, avoid to invoke commands with sudo. Default `false`.
+| Input | Required | Description |
+|---|---|---|
+| `unity-version` | yes | Unity version, e.g. `2022.3.21f1`. |
+| `unity-version-changeset` | yes | Unity changeset, e.g. `f9bb1bcc7635`. Find it in `ProjectSettings/ProjectVersion.txt` (`m_EditorVersionWithRevision`). |
+| `unity-modules` | no | Newline-separated module ids (e.g. `windows-il2cpp`). Child modules are always included. |
 
 ## Outputs
 
-### `unity-version`
+| Output | Description |
+|---|---|
+| `unity-version` | Echoed input. |
+| `unity-path` | Absolute path to the Unity Editor binary. Also exported as `$UNITY_PATH`. |
 
-Unity version.
+## Verification
 
-### `unity-path`
+After install, the action checks:
 
-Unity executable path. Also set as an environment variable `UNITY_PATH`.
+1. The Unity Hub `install-modules` stdout reports success.
+2. Each requested module's expected directory exists on disk (with the right variant for IL2CPP/Mono).
 
-## Known issues
+If any step fails, the action fails with an actionable message.
 
- - Installing `android` module with childs modules may freeze on macOS. Recommended to use with [`timeout-minutes`](https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idstepstimeout-minutes).
- - Workflow may fail with `System.IO.IOException: No space left on device` on GitHub-hosted Ubuntu. Setting `install-path: /mnt` can fix the problem.
+## Supported runners
 
-## Example usage
+`ubuntu-22.04`, `ubuntu-24.04`, `macos-latest`, `windows-latest`. Self-hosted runners are not supported.
 
-```yaml
-- name: Checkout project
-  uses: actions/checkout@v2
+## Development
 
-- name: Setup Unity
-  uses: kuler90/setup-unity@v1
-  with:
-    unity-modules: android
-
-- name: Activate Unity
-  uses: kuler90/activate-unity@v1
-  with:
-    unity-username: ${{ secrets.UNITY_USERNAME }}
-    unity-password: ${{ secrets.UNITY_PASSWORD }}
-    unity-authenticator-key: ${{ secrets.UNITY_AUTHENTICATOR_KEY }}
-
-- name: Build Unity
-  uses: kuler90/build-unity@v1
-  with:
-    build-target: Android
-    build-path: ./build.apk
+```bash
+npm install
+npm test          # unit tests for src/verify.js
+npm run build     # rebuild dist/index.js — required before committing
 ```
+
+CI verifies `dist/` is in sync.
+
+## License
+
+MIT. Originally derived from [kuler90/setup-unity](https://github.com/kuler90/setup-unity); see `LICENSE` for full attribution.
