@@ -30335,15 +30335,25 @@ async function verifyInstall(unityPath, modules) {
         throw new Error(`Verification failed: Unity binary missing at ${unityPath}`);
     }
 
-    const playbackRoot = playbackEnginesRoot(unityPath);
+    const playbackRoots = playbackEnginesRoots(unityPath);
     for (const m of modules) {
-        const spec = moduleVerificationPaths(playbackRoot, m);
-        if (!spec) {
+        // The correct PlaybackEngines root varies per module *and* per Unity version
+        // (e.g. 6.5 moved standalone supports to a sibling of Unity.app, while
+        // Android/iOS/WebGL already lived there). Resolve per module: use the first
+        // candidate root whose baseDir exists.
+        const specs = playbackRoots
+            .map(root => moduleVerificationPaths(root, m))
+            .filter(Boolean);
+        if (specs.length === 0) {
             core.warning(`No on-disk verification map for module '${m}'; skipping (install reported success).`);
             continue;
         }
-        if (!fs.existsSync(spec.baseDir)) {
-            throw new Error(`Module '${m}' verification failed: ${spec.baseDir} does not exist`);
+        const spec = specs.find(s => fs.existsSync(s.baseDir));
+        if (!spec) {
+            throw new Error(
+                `Module '${m}' verification failed: none of the expected directories exist: ` +
+                specs.map(s => s.baseDir).join(', ')
+            );
         }
         if (spec.variantContains) {
             const entries = fs.readdirSync(spec.baseDir);
@@ -30358,11 +30368,21 @@ async function verifyInstall(unityPath, modules) {
     }
 }
 
-function playbackEnginesRoot(unityPath) {
+function playbackEnginesRoots(unityPath) {
     if (process.platform === 'darwin') {
-        return path.join(path.dirname(path.dirname(unityPath)), 'PlaybackEngines');
+        // unityPath = <editor>/Unity.app/Contents/MacOS/Unity
+        const contents = path.dirname(path.dirname(unityPath));       // .../Unity.app/Contents
+        const editorRoot = path.dirname(path.dirname(contents));      // .../<editor>
+        // Unity 6.5+ moved standalone PlaybackEngines out of the .app bundle to a
+        // sibling of Unity.app; 6.3 and earlier keep them inside Contents. Some
+        // platforms (Android/iOS/WebGL) live in the sibling on all versions.
+        // Probe both locations and let verifyInstall pick per module.
+        return [
+            path.join(editorRoot, 'PlaybackEngines'),
+            path.join(contents, 'PlaybackEngines'),
+        ];
     }
-    return path.join(path.dirname(unityPath), 'Data', 'PlaybackEngines');
+    return [path.join(path.dirname(unityPath), 'Data', 'PlaybackEngines')];
 }
 
 async function runHub(hubPath, args) {
